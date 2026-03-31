@@ -1,13 +1,11 @@
 import { Injectable, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
-
-// 模拟数据库（生产环境替换为 TypeORM）
-const users: any[] = [
-  { id: 1, email: 'test@example.com', password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', role: 'user' }
-];
+import { User } from './entities/user.entity';
 
 // 模拟 Redis（生产环境替换为 Redis）
 const loginAttempts = new Map<string, { count: number; lockedUntil: number }>();
@@ -17,6 +15,8 @@ const verificationCodes = new Map<string, { code: string; expiresAt: number }>()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
 
   /**
@@ -34,7 +34,7 @@ export class AuthService {
     }
 
     // 查询用户
-    const user = users.find(u => u.email === email);
+    const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
       throw new UnauthorizedException('邮箱或密码错误');
     }
@@ -65,7 +65,7 @@ export class AuthService {
           id: user.id,
           email: user.email,
           role: user.role,
-          createdAt: new Date(),
+          createdAt: user.createdAt,
         },
       },
     };
@@ -92,7 +92,7 @@ export class AuthService {
    */
   async sendRegisterCode(email: string): Promise<{ code: number; message: string; data?: any }> {
     // 检查邮箱是否已注册
-    const existingUser = users.find(u => u.email === email);
+    const existingUser = await this.userRepository.findOne({ where: { email } });
     if (existingUser) {
       throw new ConflictException('该邮箱已注册');
     }
@@ -122,7 +122,7 @@ export class AuthService {
    */
   async register(email: string, password: string, code: string): Promise<AuthResponseDto> {
     // 检查邮箱是否已注册
-    const existingUser = users.find(u => u.email === email);
+    const existingUser = await this.userRepository.findOne({ where: { email } });
     if (existingUser) {
       throw new ConflictException('该邮箱已注册');
     }
@@ -152,13 +152,13 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // 创建用户
-    const newUser = {
-      id: users.length + 1,
+    const newUser = this.userRepository.create({
       email,
       password: hashedPassword,
-      role: 'user' as const,
-    };
-    users.push(newUser);
+      role: 'user',
+    });
+    
+    await this.userRepository.save(newUser);
 
     // 删除验证码
     verificationCodes.delete(email);
@@ -177,7 +177,7 @@ export class AuthService {
           id: newUser.id,
           email: newUser.email,
           role: newUser.role,
-          createdAt: new Date(),
+          createdAt: newUser.createdAt,
         },
       },
     };

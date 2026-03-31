@@ -16,11 +16,11 @@
     "rootDir": "./src",
     "incremental": true,
     "skipLibCheck": true,
-    "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
-  }
+  },
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
 }
