@@ -41,4 +41,6 @@ Thumbs.db
 # Testing files
 *.test.ts
 *.spec.ts
-test/
+# 保留 test 目录，但忽略特定文件
+test/*.log
+test/coverage/
