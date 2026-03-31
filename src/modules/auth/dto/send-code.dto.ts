@@ -1,12 +1,6 @@
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsOptional,
-  IsBoolean,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
 
-export class LoginDto {
+export class SendCodeDto {
   @IsEmail({}, { message: '邮箱格式不正确' })
   @IsNotEmpty({ message: '邮箱不能为空' })
   email: string;
@@ -14,8 +8,4 @@ export class LoginDto {
   @IsNotEmpty({ message: '密码不能为空' })
   @MinLength(6, { message: '密码至少 6 位' })
   password: string;
-
-  @IsOptional()
-  @IsBoolean()
-  rememberMe?: boolean;
 }
