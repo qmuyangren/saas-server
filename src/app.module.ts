@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
+import { PasswordResetModule } from './modules/password-reset/password-reset.module';
 import { databaseConfig } from './config/database.config';
 
 @Module({
@@ -17,6 +18,7 @@ import { databaseConfig } from './config/database.config';
     TypeOrmModule.forRoot(databaseConfig()),
     // 业务模块
     AuthModule,
+    PasswordResetModule,
   ],
   controllers: [AppController],
   providers: [AppService],
