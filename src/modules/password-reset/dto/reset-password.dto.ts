@@ -1,4 +1,10 @@
-import { IsEmail, IsNotEmpty, MinLength, MaxLength, Matches } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  MinLength,
+  MaxLength,
+  Matches,
+} from 'class-validator';
 
 export class ResetPasswordDto {
   @IsEmail({}, { message: '邮箱格式错误' })

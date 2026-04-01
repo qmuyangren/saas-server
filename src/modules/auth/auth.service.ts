@@ -82,7 +82,10 @@ export class AuthService {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
+    const hashedPassword: string = await bcrypt.hash(
+      dto.password,
+      BCRYPT_SALT_ROUNDS,
+    );
 
     const user = this.userRepository.create({
       email: dto.email,

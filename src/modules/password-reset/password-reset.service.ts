@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
@@ -98,7 +103,12 @@ export class PasswordResetService implements OnModuleDestroy {
     await dailyPipeline.exec();
 
     // 记录最近发送时间
-    await this.redis.set(`reset:last:${dto.email}`, now.toString(), 'EX', SEND_INTERVAL_SECONDS);
+    await this.redis.set(
+      `reset:last:${dto.email}`,
+      now.toString(),
+      'EX',
+      SEND_INTERVAL_SECONDS,
+    );
 
     // 模拟邮件发送（日志输出）
     console.log(`[PasswordReset] 验证码已发送到 ${dto.email}: ${code}`);
@@ -158,7 +168,10 @@ export class PasswordResetService implements OnModuleDestroy {
     }
 
     // 使用 bcrypt 加密新密码
-    const hashedPassword = await bcrypt.hash(dto.newPassword, BCRYPT_SALT_ROUNDS);
+    const hashedPassword = await bcrypt.hash(
+      dto.newPassword,
+      BCRYPT_SALT_ROUNDS,
+    );
 
     // 更新数据库密码
     user.password = hashedPassword;
@@ -173,7 +186,10 @@ export class PasswordResetService implements OnModuleDestroy {
       role: user.role,
     };
 
-    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN', '7d') as JwtSignOptions['expiresIn'];
+    const expiresIn = this.configService.get<string>(
+      'JWT_EXPIRES_IN',
+      '7d',
+    ) as JwtSignOptions['expiresIn'];
     const token = this.jwtService.sign(payload, { expiresIn });
 
     // 记录操作日志

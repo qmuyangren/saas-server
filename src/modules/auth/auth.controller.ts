@@ -12,6 +12,7 @@ import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto, SendCodeDto } from './dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import type { Request } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -19,8 +20,8 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto, @Req() req: any) {
-    const ipAddress = req.ip || req.socket?.remoteAddress;
+  async login(@Body() loginDto: LoginDto, @Req() req: Request) {
+    const ipAddress = (req as any).ip || (req as any).socket?.remoteAddress;
     const userAgent = req.headers['user-agent'];
 
     return this.authService.login(loginDto, ipAddress, userAgent);
@@ -45,15 +46,15 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  async getProfile(@CurrentUser() user: Record<string, any>) {
+  getProfile(@CurrentUser() user: Record<string, any>) {
     return {
       code: 0,
       message: 'success',
       data: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt,
+        id: user.id as string,
+        email: user.email as string,
+        role: user.role as string,
+        createdAt: user.createdAt as Date,
       },
     };
   }
