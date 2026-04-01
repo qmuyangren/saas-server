@@ -28,7 +28,7 @@ describe('Authentication (e2e)', () => {
     // 清理测试数据
     await dataSource.query('DELETE FROM login_log');
     await dataSource.query('DELETE FROM users');
-    
+
     // 创建测试用户
     await dataSource.query(`
       INSERT INTO users (email, password, role, created_at, updated_at)
@@ -178,9 +178,7 @@ describe('Authentication (e2e)', () => {
     });
 
     it('should fail without token', () => {
-      return request(app.getHttpServer())
-        .get('/auth/me')
-        .expect(401);
+      return request(app.getHttpServer()).get('/auth/me').expect(401);
     });
 
     it('should fail with invalid token', () => {
