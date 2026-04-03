@@ -47,7 +47,7 @@ describe('Authentication (e2e)', () => {
         })
         .expect(201)
         .expect((res) => {
-          expect(res.body.code).toBe(0);
+          expect(res.body.code).toBe(200);
           expect(res.body.message).toBe('注册成功');
         });
     });
@@ -89,7 +89,7 @@ describe('Authentication (e2e)', () => {
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body.code).toBe(0);
+          expect(res.body.code).toBe(200);
           expect(res.body.data.token).toBeDefined();
           expect(res.body.data.user.email).toBe('test@example.com');
         });
@@ -138,7 +138,7 @@ describe('Authentication (e2e)', () => {
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body.code).toBe(0);
+          expect(res.body.code).toBe(200);
           expect(res.body.message).toBe('验证码已发送');
         });
     });
@@ -172,7 +172,7 @@ describe('Authentication (e2e)', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
         .expect((res) => {
-          expect(res.body.code).toBe(0);
+          expect(res.body.code).toBe(200);
           expect(res.body.data.email).toBe('test@example.com');
         });
     });

@@ -1,0 +1,401 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+/// 用户表
+model BaseUser {
+  id                 BigInt          @id @default(autoincrement()) @map("id")
+  uuid               String          @unique @map("uuid") @db.VarChar(32)
+  username           String          @unique @map("username") @db.VarChar(50)
+  password           String          @map("password") @db.VarChar(255)
+  nickname           String?         @map("nickname") @db.VarChar(50)
+  avatar             String?         @map("avatar") @db.VarChar(255)
+  phone              String?         @map("phone") @db.VarChar(20)
+  email              String?         @map("email") @db.VarChar(100)
+  status             Int             @default(1) @map("status")
+  userType           Int             @default(2) @map("user_type")
+  companyId          BigInt?         @map("company_id")
+  departmentId       BigInt?         @map("department_id")
+  positionId         BigInt?         @map("position_id")
+  wechatOpenid       String?         @map("wechat_openid") @db.VarChar(100)
+  dingtalkUserid     String?         @map("dingtalk_userid") @db.VarChar(100)
+  weworkUserid       String?         @map("wework_userid") @db.VarChar(100)
+  githubId           String?         @map("github_id") @db.VarChar(100)
+  lastLoginIp        String?         @map("last_login_ip") @db.VarChar(50)
+  lastLoginTime      DateTime?       @map("last_login_time")
+  loginCount         Int             @default(0) @map("login_count")
+  registerTime       DateTime?       @map("register_time")
+  registerIp         String?         @map("register_ip") @db.VarChar(50)
+  tokenVersion       Int             @default(1) @map("token_version")
+  passwordExpireTime DateTime?       @map("password_expire_time")
+  createdBy          BigInt?         @map("created_by")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedBy          BigInt?         @map("updated_by")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+  isDeleted          Int             @default(0) @map("is_deleted")
+  deletedBy          BigInt?         @map("deleted_by")
+  deletedAt          DateTime?       @map("deleted_at")
+  version            Int             @default(1) @map("version")
+  company            BaseCompany?    @relation("CompanyUsers", fields: [companyId], references: [id])
+  department         BaseDepartment? @relation("DepartmentUsers", fields: [departmentId], references: [id])
+  position           BasePosition?   @relation("PositionUsers", fields: [positionId], references: [id])
+  operatedLogs       LogOper[]
+  groups             MapUserGroup[]
+  roles              MapUserRole[]
+  tags               MapUserTag[]
+
+  @@index([companyId])
+  @@index([departmentId])
+  @@index([status])
+  @@index([isDeleted])
+  @@index([createdAt])
+  @@index([positionId], map: "base_user_position_id_fkey")
+  @@map("base_user")
+}
+
+/// 公司表
+model BaseCompany {
+  id          BigInt           @id @default(autoincrement()) @map("id")
+  name        String           @map("name") @db.VarChar(100)
+  code        String           @unique @map("code") @db.VarChar(50)
+  parentId    BigInt           @default(0) @map("parent_id")
+  level       Int              @default(1) @map("level")
+  status      Int              @default(1) @map("status")
+  sort        Int              @default(0) @map("sort")
+  remark      String?          @map("remark") @db.VarChar(255)
+  createdBy   BigInt?          @map("created_by")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedBy   BigInt?          @map("updated_by")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  isDeleted   Int              @default(0) @map("is_deleted")
+  deletedBy   BigInt?          @map("deleted_by")
+  deletedAt   DateTime?        @map("deleted_at")
+  departments BaseDepartment[]
+  users       BaseUser[]       @relation("CompanyUsers")
+
+  @@index([parentId])
+  @@map("base_company")
+}
+
+/// 部门表
+model BaseDepartment {
+  id        BigInt      @id @default(autoincrement()) @map("id")
+  companyId BigInt      @map("company_id")
+  name      String      @map("name") @db.VarChar(100)
+  parentId  BigInt      @default(0) @map("parent_id")
+  leaderId  BigInt?     @map("leader_id")
+  status    Int         @default(1) @map("status")
+  sort      Int         @default(0) @map("sort")
+  createdBy BigInt?     @map("created_by")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedBy BigInt?     @map("updated_by")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+  isDeleted Int         @default(0) @map("is_deleted")
+  company   BaseCompany @relation(fields: [companyId], references: [id])
+  users     BaseUser[]  @relation("DepartmentUsers")
+
+  @@index([companyId])
+  @@index([parentId])
+  @@map("base_department")
+}
+
+/// 岗位表
+model BasePosition {
+  id        BigInt     @id @default(autoincrement()) @map("id")
+  name      String     @map("name") @db.VarChar(50)
+  code      String     @unique @map("code") @db.VarChar(50)
+  status    Int        @default(1) @map("status")
+  sort      Int        @default(0) @map("sort")
+  createdBy BigInt?    @map("created_by")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedBy BigInt?    @map("updated_by")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  isDeleted Int        @default(0) @map("is_deleted")
+  users     BaseUser[] @relation("PositionUsers")
+
+  @@map("base_position")
+}
+
+/// 角色表
+model BaseRole {
+  id        BigInt        @id @default(autoincrement()) @map("id")
+  name      String        @map("name") @db.VarChar(50)
+  code      String        @unique @map("code") @db.VarChar(50)
+  status    Int           @default(1) @map("status")
+  sort      Int           @default(0) @map("sort")
+  remark    String?       @map("remark") @db.VarChar(255)
+  createdBy BigInt?       @map("created_by")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedBy BigInt?       @map("updated_by")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  isDeleted Int           @default(0) @map("is_deleted")
+  users     MapUserRole[]
+
+  @@map("base_role")
+}
+
+/// 分组表
+model BaseGroup {
+  id        BigInt         @id @default(autoincrement()) @map("id")
+  name      String         @map("name") @db.VarChar(50)
+  type      Int            @default(1) @map("type")
+  status    Int            @default(1) @map("status")
+  remark    String?        @map("remark") @db.VarChar(255)
+  createdBy BigInt?        @map("created_by")
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedBy BigInt?        @map("updated_by")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+  isDeleted Int            @default(0) @map("is_deleted")
+  users     MapUserGroup[]
+
+  @@map("base_group")
+}
+
+/// 权限表
+model BasePermission {
+  id               BigInt                         @id @default(autoincrement()) @map("id")
+  parentId         BigInt                         @default(0) @map("parent_id")
+  name             String                         @map("name") @db.VarChar(50)
+  code             String                         @unique @map("code") @db.VarChar(100)
+  type             Int                            @map("type")
+  path             String?                        @map("path") @db.VarChar(255)
+  component        String?                        @map("component") @db.VarChar(255)
+  icon             String?                        @map("icon") @db.VarChar(50)
+  sort             Int                            @default(0) @map("sort")
+  status           Int                            @default(1) @map("status")
+  remark           String?                        @map("remark") @db.VarChar(255)
+  createdBy        BigInt?                        @map("created_by")
+  createdAt        DateTime                       @default(now()) @map("created_at")
+  updatedBy        BigInt?                        @map("updated_by")
+  updatedAt        DateTime                       @updatedAt @map("updated_at")
+  isDeleted        Int                            @default(0) @map("is_deleted")
+  permissionGroups MapPermissionGroupPermission[]
+
+  @@index([parentId])
+  @@index([type])
+  @@map("base_permission")
+}
+
+/// 权限组表
+model BasePermissionGroup {
+  id          BigInt                         @id @default(autoincrement()) @map("id")
+  name        String                         @map("name") @db.VarChar(50)
+  code        String                         @unique @map("code") @db.VarChar(50)
+  type        Int                            @default(1) @map("type")
+  status      Int                            @default(1) @map("status")
+  remark      String?                        @map("remark") @db.VarChar(255)
+  createdBy   BigInt?                        @map("created_by")
+  createdAt   DateTime                       @default(now()) @map("created_at")
+  updatedBy   BigInt?                        @map("updated_by")
+  updatedAt   DateTime                       @updatedAt @map("updated_at")
+  isDeleted   Int                            @default(0) @map("is_deleted")
+  permissions MapPermissionGroupPermission[]
+  targets     MapPermissionGroupTarget[]
+
+  @@map("base_permission_group")
+}
+
+/// 用户标签表
+model BaseUserTag {
+  id        BigInt       @id @default(autoincrement()) @map("id")
+  name      String       @map("name") @db.VarChar(50)
+  color     String?      @map("color") @db.VarChar(20)
+  status    Int          @default(1) @map("status")
+  createdBy BigInt?      @map("created_by")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedBy BigInt?      @map("updated_by")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  isDeleted Int          @default(0) @map("is_deleted")
+  users     MapUserTag[]
+
+  @@map("base_user_tag")
+}
+
+/// 用户角色关联表
+model MapUserRole {
+  id        BigInt   @id @default(autoincrement()) @map("id")
+  userId    BigInt   @map("user_id")
+  roleId    BigInt   @map("role_id")
+  createdBy BigInt?  @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  role      BaseRole @relation(fields: [roleId], references: [id])
+  user      BaseUser @relation(fields: [userId], references: [id])
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("map_user_role")
+}
+
+/// 用户分组关联表
+model MapUserGroup {
+  id        BigInt    @id @default(autoincrement()) @map("id")
+  userId    BigInt    @map("user_id")
+  groupId   BigInt    @map("group_id")
+  createdBy BigInt?   @map("created_by")
+  createdAt DateTime  @default(now()) @map("created_at")
+  group     BaseGroup @relation(fields: [groupId], references: [id])
+  user      BaseUser  @relation(fields: [userId], references: [id])
+
+  @@unique([userId, groupId])
+  @@index([userId])
+  @@index([groupId])
+  @@map("map_user_group")
+}
+
+/// 用户标签关联表
+model MapUserTag {
+  id        BigInt      @id @default(autoincrement()) @map("id")
+  userId    BigInt      @map("user_id")
+  tagId     BigInt      @map("tag_id")
+  createdAt DateTime    @default(now()) @map("created_at")
+  tag       BaseUserTag @relation(fields: [tagId], references: [id])
+  user      BaseUser    @relation(fields: [userId], references: [id])
+
+  @@unique([userId, tagId])
+  @@index([tagId], map: "map_user_tag_tag_id_fkey")
+  @@map("map_user_tag")
+}
+
+/// 权限组权限关联表
+model MapPermissionGroupPermission {
+  id                BigInt              @id @default(autoincrement()) @map("id")
+  permissionGroupId BigInt              @map("permission_group_id")
+  permissionId      BigInt              @map("permission_id")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  permissionGroup   BasePermissionGroup @relation(fields: [permissionGroupId], references: [id])
+  permission        BasePermission      @relation(fields: [permissionId], references: [id])
+
+  @@unique([permissionGroupId, permissionId])
+  @@index([permissionId], map: "map_permission_group_permission_permission_id_fkey")
+  @@map("map_permission_group_permission")
+}
+
+/// 权限组授权对象表
+model MapPermissionGroupTarget {
+  id                BigInt              @id @default(autoincrement()) @map("id")
+  permissionGroupId BigInt              @map("permission_group_id")
+  targetType        String              @map("target_type") @db.VarChar(20)
+  targetId          BigInt              @map("target_id")
+  createdBy         BigInt?             @map("created_by")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  permissionGroup   BasePermissionGroup @relation(fields: [permissionGroupId], references: [id])
+
+  @@index([targetType, targetId])
+  @@index([permissionGroupId])
+  @@map("map_permission_group_target")
+}
+
+/// 字典类型表
+model CfgDictType {
+  id        BigInt        @id @default(autoincrement()) @map("id")
+  code      String        @unique @map("code") @db.VarChar(50)
+  name      String        @map("name") @db.VarChar(50)
+  status    Int           @default(1) @map("status")
+  remark    String?       @map("remark") @db.VarChar(255)
+  createdBy BigInt?       @map("created_by")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedBy BigInt?       @map("updated_by")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  isDeleted Int           @default(0) @map("is_deleted")
+  dictData  CfgDictData[]
+
+  @@map("cfg_dict_type")
+}
+
+/// 字典数据表
+model CfgDictData {
+  id          BigInt      @id @default(autoincrement()) @map("id")
+  dictType    String      @map("dict_type") @db.VarChar(50)
+  label       String      @map("label") @db.VarChar(50)
+  value       String      @map("value") @db.VarChar(50)
+  sort        Int         @default(0) @map("sort")
+  status      Int         @default(1) @map("status")
+  cssClass    String?     @map("css_class") @db.VarChar(50)
+  isDefault   Int         @default(0) @map("is_default")
+  createdBy   BigInt?     @map("created_by")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedBy   BigInt?     @map("updated_by")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  dictTypeRef CfgDictType @relation(fields: [dictType], references: [code])
+
+  @@index([dictType])
+  @@map("cfg_dict_data")
+}
+
+/// 系统配置表
+model CfgSystemConfig {
+  id          BigInt   @id @default(autoincrement()) @map("id")
+  configKey   String   @unique @map("config_key") @db.VarChar(100)
+  configValue String?  @map("config_value") @db.Text
+  configType  String?  @default("text") @map("config_type") @db.VarChar(20)
+  configGroup String?  @default("basic") @map("config_group") @db.VarChar(50)
+  name        String   @map("name") @db.VarChar(50)
+  remark      String?  @map("remark") @db.VarChar(255)
+  isPublic    Int      @default(0) @map("is_public")
+  status      Int      @default(1) @map("status")
+  createdBy   BigInt?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedBy   BigInt?  @map("updated_by")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("cfg_system_config")
+}
+
+/// 第三方服务配置表
+/// 用于管理短信、云存储、邮件、第三方登录等服务商配置
+/// config 字段为 JSON 格式，各服务商配置示例：
+/// 短信-阿里云: {"accessKeyId":"xxx","accessKeySecret":"xxx","signName":"企业","region":"cn-hangzhou"}
+/// 短信-腾讯云: {"secretId":"xxx","secretKey":"xxx","signName":"企业","sdkAppId":"1400xxx"}
+/// 存储-OSS: {"accessKeyId":"xxx","accessKeySecret":"xxx","bucket":"my-bucket","region":"oss-cn-hangzhou","cdnDomain":"https://cdn.example.com"}
+/// 存储-OBS: {"accessKeyId":"xxx","secretAccessKey":"xxx","bucket":"my-bucket","region":"cn-east-3"}
+/// 存储-七牛: {"accessKey":"xxx","secretKey":"xxx","bucket":"my-bucket","domain":"https://cdn.example.com"}
+/// 邮件-SMTP: {"host":"smtp.aliyun.com","port":465,"username":"noreply@example.com","password":"xxx","secure":true,"fromName":"系统通知"}
+/// OAuth-微信: {"appId":"xxx","appSecret":"xxx","redirectUri":"https://example.com/callback/wechat"}
+/// OAuth-钉钉: {"appId":"xxx","appSecret":"xxx","redirectUri":"https://example.com/callback/dingtalk"}
+/// OAuth-企业微信: {"corpId":"xxx","agentId":"xxx","redirectUri":"https://example.com/callback/wework"}
+model CfgThirdParty {
+  id         BigInt   @id @default(autoincrement()) @map("id")
+  code       String   @unique @map("code") @db.VarChar(50)
+  name       String   @map("name") @db.VarChar(50)
+  type       String   @map("type") @db.VarChar(20)
+  provider   String   @map("provider") @db.VarChar(50)
+  config     String   @map("config") @db.Text
+  status     Int      @default(1) @map("status")
+  isDefault  Int      @default(0) @map("is_default")
+  remark     String?  @map("remark") @db.VarChar(255)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([type])
+  @@index([status])
+  @@map("cfg_third_party")
+}
+
+/// 操作日志表
+model LogOper {
+  id        BigInt    @id @default(autoincrement()) @map("id")
+  userId    BigInt?   @map("user_id")
+  username  String?   @map("username") @db.VarChar(50)
+  module    String?   @map("module") @db.VarChar(50)
+  operation String?   @map("operation") @db.VarChar(50)
+  method    String?   @map("method") @db.VarChar(10)
+  url       String?   @map("url") @db.VarChar(255)
+  params    String?   @map("params") @db.Text
+  result    String?   @map("result") @db.Text
+  status    Int?      @map("status")
+  errorMsg  String?   @map("error_msg") @db.Text
+  ip        String?   @map("ip") @db.VarChar(50)
+  duration  Int?      @map("duration")
+  userAgent String?   @map("user_agent") @db.VarChar(255)
+  createdAt DateTime  @default(now()) @map("created_at")
+  user      BaseUser? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("log_oper")
+}
