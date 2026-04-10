@@ -67,3 +67,29 @@ export const LOCK_CACHE = {
   /** 订单处理锁 */
   orderProcess: (orderId: number) => `lock:order:${orderId}`,
 } as const;
+
+/** 租户模块缓存键 */
+export const TENANT_CACHE = {
+  /** 租户配置 */
+  config: (tenantId: number) => `tenant:config:${tenantId}`,
+  /** 租户业务列表 */
+  businesses: (tenantId: number) => `tenant:businesses:${tenantId}`,
+  /** 用户租户列表 */
+  userTenants: (userId: string) => `user:tenants:${userId}`,
+} as const;
+
+/** 业务模块缓存键 */
+export const BUSINESS_CACHE = {
+  /** 业务详情 */
+  detail: (businessId: number) => `business:detail:${businessId}`,
+  /** 业务应用列表 */
+  apps: (businessId: number) => `business:apps:${businessId}`,
+} as const;
+
+/** 应用模块缓存键 */
+export const APP_CACHE = {
+  /** 应用详情 */
+  detail: (appId: number) => `app:detail:${appId}`,
+  /** 应用客户端配置 */
+  client: (appId: number, clientId: string) => `app:client:${appId}:${clientId}`,
+} as const;

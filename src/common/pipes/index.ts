@@ -1,4 +1,9 @@
-export * from './validation.pipe';
-export * from './parse-int.pipe';
-export * from './parse-id.pipe';
-export * from './default-value.pipe';
+/**
+ * 管道已移除
+ *
+ * @description
+ * 参数校验统一使用 class-validator，无需自定义管道。
+ */
+
+// 保留文件以避免导入错误
+export {};

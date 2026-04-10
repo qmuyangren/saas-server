@@ -3,8 +3,6 @@ import { defineConfig } from 'prisma/config';
 export default defineConfig({
   schema: 'prisma/schema.prisma',
   datasource: {
-    url:
-      process.env.DATABASE_URL ||
-      'mysql://root:password@localhost:3306/enterprise_mgmt',
+    url: 'mysql://root:qxsj@2025@8.148.22.71:3306/practice05',
   },
 });

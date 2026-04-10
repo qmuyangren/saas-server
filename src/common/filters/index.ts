@@ -1,3 +1,10 @@
-export * from './global-exception.filter';
-export * from './http-exception.filter';
-export * from './prisma-exception.filter';
+/**
+ * 过滤器已移除
+ *
+ * @description
+ * 全局异常过滤器已直接在 main.ts 中配置，
+ * 无需通过此模块导出。
+ */
+
+// 保留文件以避免导入错误
+export {};

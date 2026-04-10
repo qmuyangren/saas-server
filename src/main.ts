@@ -29,11 +29,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
-import {
-  GlobalExceptionFilter,
-  TransformInterceptor,
-  LoggingInterceptor,
-} from './common';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { TransformInterceptor, LoggingInterceptor } from './common';
 
 async function bootstrap() {
   // 创建 NestJS 应用实例

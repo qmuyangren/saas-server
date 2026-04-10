@@ -18,6 +18,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
+import { SystemModule } from './modules/system';
 
 @Module({
   imports: [
@@ -28,6 +29,8 @@ import { InfrastructureModule } from './infrastructure/infrastructure.module';
     }),
     // 基础设施模块 - 提供数据库、缓存、队列等服务
     InfrastructureModule,
+    // 系统模块 - 占位模块，后续添加配置、用户、组织、角色、权限等服务
+    SystemModule,
   ],
 })
 export class AppModule {}

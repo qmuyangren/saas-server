@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
-import { ErrorCode } from '../constants';
+import { ErrorCode } from '../constants/error-codes.const';
 
 @Injectable()
 export class RolesGuard implements CanActivate {

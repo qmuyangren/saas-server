@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = "mysql://root:qxsj@2025@8.148.22.71:3306/practice05"
 }
 
 /// 用户表
@@ -47,6 +48,8 @@ model BaseUser {
   groups             MapUserGroup[]
   roles              MapUserRole[]
   tags               MapUserTag[]
+  userTenants        UserTenant[]
+  superAdmins        SuperAdmin[]
 
   @@index([companyId])
   @@index([departmentId])
@@ -95,6 +98,8 @@ model BaseDepartment {
   updatedBy BigInt?     @map("updated_by")
   updatedAt DateTime    @updatedAt @map("updated_at")
   isDeleted Int         @default(0) @map("is_deleted")
+  deletedBy BigInt?     @map("deleted_by")
+  deletedAt DateTime?   @map("deleted_at")
   company   BaseCompany @relation(fields: [companyId], references: [id])
   users     BaseUser[]  @relation("DepartmentUsers")
 
@@ -115,6 +120,8 @@ model BasePosition {
   updatedBy BigInt?    @map("updated_by")
   updatedAt DateTime   @updatedAt @map("updated_at")
   isDeleted Int        @default(0) @map("is_deleted")
+  deletedBy BigInt?    @map("deleted_by")
+  deletedAt DateTime?  @map("deleted_at")
   users     BaseUser[] @relation("PositionUsers")
 
   @@map("base_position")
@@ -133,7 +140,10 @@ model BaseRole {
   updatedBy BigInt?       @map("updated_by")
   updatedAt DateTime      @updatedAt @map("updated_at")
   isDeleted Int           @default(0) @map("is_deleted")
+  deletedBy BigInt?       @map("deleted_by")
+  deletedAt DateTime?     @map("deleted_at")
   users     MapUserRole[]
+  userTenants UserTenant[]
 
   @@map("base_role")
 }
@@ -173,6 +183,8 @@ model BasePermission {
   updatedBy        BigInt?                        @map("updated_by")
   updatedAt        DateTime                       @updatedAt @map("updated_at")
   isDeleted        Int                            @default(0) @map("is_deleted")
+  deletedBy        BigInt?                        @map("deleted_by")
+  deletedAt        DateTime?                      @map("deleted_at")
   permissionGroups MapPermissionGroupPermission[]
 
   @@index([parentId])
@@ -193,6 +205,8 @@ model BasePermissionGroup {
   updatedBy   BigInt?                        @map("updated_by")
   updatedAt   DateTime                       @updatedAt @map("updated_at")
   isDeleted   Int                            @default(0) @map("is_deleted")
+  deletedBy   BigInt?                        @map("deleted_by")
+  deletedAt   DateTime?                      @map("deleted_at")
   permissions MapPermissionGroupPermission[]
   targets     MapPermissionGroupTarget[]
 
@@ -295,6 +309,9 @@ model CfgDictType {
   id        BigInt        @id @default(autoincrement()) @map("id")
   code      String        @unique @map("code") @db.VarChar(50)
   name      String        @map("name") @db.VarChar(50)
+  isTree    Int           @default(0) @map("is_tree")
+  type      Int           @default(1) @map("type")
+  sort      Int           @default(0) @map("sort")
   status    Int           @default(1) @map("status")
   remark    String?       @map("remark") @db.VarChar(255)
   createdBy BigInt?       @map("created_by")
@@ -302,6 +319,8 @@ model CfgDictType {
   updatedBy BigInt?       @map("updated_by")
   updatedAt DateTime      @updatedAt @map("updated_at")
   isDeleted Int           @default(0) @map("is_deleted")
+  deletedBy BigInt?       @map("deleted_by")
+  deletedAt DateTime?     @map("deleted_at")
   dictData  CfgDictData[]
 
   @@map("cfg_dict_type")
@@ -317,12 +336,17 @@ model CfgDictData {
   status      Int         @default(1) @map("status")
   cssClass    String?     @map("css_class") @db.VarChar(50)
   isDefault   Int         @default(0) @map("is_default")
+  description String?     @map("description") @db.VarChar(255)
   createdBy   BigInt?     @map("created_by")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedBy   BigInt?     @map("updated_by")
   updatedAt   DateTime    @updatedAt @map("updated_at")
+  isDeleted   Int         @default(0) @map("is_deleted")
+  deletedBy   BigInt?     @map("deleted_by")
+  deletedAt   DateTime?   @map("deleted_at")
   dictTypeRef CfgDictType @relation(fields: [dictType], references: [code])
 
+  @@unique([dictType, value])
   @@index([dictType])
   @@map("cfg_dict_data")
 }
@@ -342,6 +366,9 @@ model CfgSystemConfig {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedBy   BigInt?  @map("updated_by")
   updatedAt   DateTime @updatedAt @map("updated_at")
+  isDeleted   Int      @default(0) @map("is_deleted")
+  deletedBy   BigInt?  @map("deleted_by")
+  deletedAt   DateTime? @map("deleted_at")
 
   @@map("cfg_system_config")
 }
@@ -398,4 +425,200 @@ model LogOper {
   @@index([userId])
   @@index([createdAt])
   @@map("log_oper")
+}
+
+// ==================== 多租户相关模型 ====================
+
+/// 租户表
+model Tenant {
+  id                 BigInt          @id @default(autoincrement()) @map("id")
+  uuid               String          @unique @map("uuid") @db.VarChar(32)
+  name               String          @map("name") @db.VarChar(100)
+  code               String          @unique @map("code") @db.VarChar(50)
+  logo               String?         @map("logo") @db.VarChar(255)
+  contactName        String?         @map("contact_name") @db.VarChar(50)
+  contactPhone       String?         @map("contact_phone") @db.VarChar(20)
+  contactEmail       String?         @map("contact_email") @db.VarChar(100)
+  domain             String?         @map("domain") @db.VarChar(100)
+  status             Int             @default(1) @map("status")
+  expireAt           DateTime?       @map("expire_at")
+  maxUsers           Int             @default(100) @map("max_users")
+  usedUsers          Int             @default(0) @map("used_users")
+  currentBusinessId  BigInt?         @map("current_business_id") // 当前租户启用的业务ID
+  remark             String?         @map("remark") @db.VarChar(500)
+  createdBy          BigInt?         @map("created_by")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedBy          BigInt?         @map("updated_by")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+  isDeleted          Int             @default(0) @map("is_deleted")
+  deletedBy          BigInt?         @map("deleted_by")
+  deletedAt          DateTime?       @map("deleted_at")
+  users              UserTenant[]
+  tenantBusinesses   TenantBusiness[]
+
+  @@map("tenant")
+}
+
+/// 用户-租户关联表（用户可属于多个租户）
+model UserTenant {
+  id                 BigInt          @id @default(autoincrement()) @map("id")
+  userId             BigInt          @map("user_id")
+  tenantId           BigInt          @map("tenant_id")
+  isDefault          Int             @default(0) @map("is_default")
+  roleId             BigInt?         @map("role_id")
+  status             Int             @default(1) @map("status")
+  remark             String?         @map("remark") @db.VarChar(255)
+  createdBy          BigInt?         @map("created_by")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedBy          BigInt?         @map("updated_by")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+  isDeleted          Int             @default(0) @map("is_deleted")
+  deletedBy          BigInt?         @map("deleted_by")
+  deletedAt          DateTime?       @map("deleted_at")
+  user               BaseUser        @relation(fields: [userId], references: [id])
+  tenant             Tenant          @relation(fields: [tenantId], references: [id])
+  role               BaseRole?       @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, tenantId])
+  @@index([userId])
+  @@index([tenantId])
+  @@map("user_tenant")
+}
+
+/// 业务表（产品线）
+model Business {
+  id                 BigInt          @id @default(autoincrement()) @map("id")
+  uuid               String          @unique @map("uuid") @db.VarChar(32)
+  name               String          @map("name") @db.VarChar(100)
+  code               String          @unique @map("code") @db.VarChar(50)
+  icon               String?         @map("icon") @db.VarChar(255)
+  description        String?         @map("description") @db.VarChar(500)
+  status             Int             @default(1) @map("status")
+  sort               Int             @default(0) @map("sort")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+  isDeleted          Int             @default(0) @map("is_deleted")
+  tenantBusinesses   TenantBusiness[]
+  businessApps       BusinessApp[]
+
+  @@map("business")
+}
+
+/// 租户-业务关联表（租户可订阅多个业务）
+model TenantBusiness {
+  id                 BigInt          @id @default(autoincrement()) @map("id")
+  tenantId           BigInt          @map("tenant_id")
+  businessId         BigInt          @map("business_id")
+  status             Int             @default(1) @map("status")
+  expiresAt          DateTime?       @map("expires_at")
+  trialAt            DateTime?       @map("trial_at")
+  remark             String?         @map("remark") @db.VarChar(255)
+  createdBy          BigInt?         @map("created_by")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedBy          BigInt?         @map("updated_by")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+  isDeleted          Int             @default(0) @map("is_deleted")
+  deletedBy          BigInt?         @map("deleted_by")
+  deletedAt          DateTime?       @map("deleted_at")
+  tenant             Tenant          @relation(fields: [tenantId], references: [id])
+  business           Business        @relation(fields: [businessId], references: [id])
+
+  @@unique([tenantId, businessId])
+  @@index([tenantId])
+  @@index([businessId])
+  @@map("tenant_business")
+}
+
+/// 应用表（端：PC、Mobile、MiniProgram）
+model App {
+  id                 BigInt          @id @default(autoincrement()) @map("id")
+  uuid               String          @unique @map("uuid") @db.VarChar(32)
+  businessId         BigInt          @map("business_id")
+  name               String          @map("name") @db.VarChar(100)
+  code               String          @map("code") @db.VarChar(50)
+  type               Int             @default(1) @map("type")
+  description        String?         @map("description") @db.VarChar(500)
+  logo               String?         @map("logo") @db.VarChar(255)
+  domain             String?         @map("domain") @db.VarChar(100)
+  config             String?         @map("config") @db.Text
+  status             Int             @default(1) @map("status")
+  sort               Int             @default(0) @map("sort")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+  isDeleted          Int             @default(0) @map("is_deleted")
+  businessApps       BusinessApp[]
+  appClients         AppClient[]
+
+  @@index([businessId])
+  @@map("app")
+}
+
+/// 业务-应用关联表（业务可有多个应用）
+model BusinessApp {
+  id                 BigInt          @id @default(autoincrement()) @map("id")
+  businessId         BigInt          @map("business_id")
+  appId              BigInt          @map("app_id")
+  status             Int             @default(1) @map("status")
+  sort               Int             @default(0) @map("sort")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+  business           Business        @relation(fields: [businessId], references: [id])
+  app                App             @relation(fields: [appId], references: [id])
+
+  @@unique([businessId, appId])
+  @@index([businessId])
+  @@index([appId])
+  @@map("business_app")
+}
+
+/// 应用-客户端关联表（应用的客户端配置：Web、iOS、Android）
+model AppClient {
+  id                 BigInt          @id @default(autoincrement()) @map("id")
+  appId              BigInt          @map("app_id")
+  clientId           String          @unique @map("client_id") @db.VarChar(50)
+  name               String          @map("name") @db.VarChar(100)
+  type               Int             @default(1) @map("type")
+  config             String?         @map("config") @db.Text
+  status             Int             @default(1) @map("status")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+  app                App             @relation(fields: [appId], references: [id])
+
+  @@index([appId])
+  @@map("app_client")
+}
+
+/// 超级管理表
+model SuperAdmin {
+  id                 BigInt          @id @default(autoincrement()) @map("id")
+  userId             BigInt          @unique @map("user_id")
+  status             Int             @default(1) @map("status")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  user               BaseUser        @relation(fields: [userId], references: [id])
+
+  @@map("super_admin")
+}
+
+/// 行政区划表
+model CfgArea {
+  id         BigInt   @id @default(autoincrement()) @map("id")
+  code       String   @unique @map("code") @db.VarChar(20)
+  fullName   String   @map("full_name") @db.VarChar(100)
+  quickQuery String?  @map("quick_query") @db.VarChar(50)
+  parentId   BigInt   @default(0) @map("parent_id")
+  type       Int      @default(1) @map("type")
+  sort       Int      @default(0) @map("sort")
+  status     Int      @default(1) @map("status")
+  remark     String?  @map("remark") @db.VarChar(255)
+  createdBy  BigInt?  @map("created_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedBy  BigInt?  @map("updated_by")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  isDeleted  Int      @default(0) @map("is_deleted")
+  deletedBy  BigInt?  @map("deleted_by")
+  deletedAt  DateTime? @map("deleted_at")
+
+  @@index([parentId])
+  @@index([type])
+  @@map("cfg_area")
 }

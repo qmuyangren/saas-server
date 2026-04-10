@@ -48,7 +48,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
       this.client.on('error', (err: Error) => {
         this.connected = false;
-        this.logger.error('Redis connection error:', err.message);
+        // Only log non-ping errors after initial connection
+        if (this.connected) {
+          this.logger.warn('Redis error:', err.message);
+        }
       });
 
       await this.client.ping();

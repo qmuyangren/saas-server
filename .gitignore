@@ -30,6 +30,8 @@ coverage/
 # IDE
 .idea/
 .vscode/
+.claude/
+.github/
 *.swp
 *.swo
 *~
